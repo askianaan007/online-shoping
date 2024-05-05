@@ -1,0 +1,5 @@
+1.create files 
+ frontend
+ backend
+ create npm init 
+ install packages - npm i express dotenv mongoose 
