@@ -5,7 +5,10 @@ const APIFeatures = require("../utils/apiFeatures");
 
 //Get Product - {{Base_url}}/api/v1/products
 exports.getProducts = async (req, res, next) => {
-  const apiFeatures = new APIFeatures(Product.find(), req.query).search();
+  const apiFeatures = new APIFeatures(Product.find(), req.query)
+    .search()
+    .filter()
+    .paginate(resPerPage);
   const products = await apiFeatures.query;
   res.status(200).json({
     success: "true",
@@ -26,7 +29,6 @@ exports.newProduct = catchAsyncError(async (req, res, next) => {
 //get single products - {{Base_url}}/api/v1/product/6634ec47953fe0c881cdb8d0
 exports.getSingleProduct = async (req, res, next) => {
   const product = await Product.findById(req.params.id);
-
   if (!product) {
     return next(new ErrorHandler("Product not found test", 400));
   }
@@ -37,7 +39,6 @@ exports.getSingleProduct = async (req, res, next) => {
 };
 
 //update product - {{Base_url}}/api/v1/product/6634ec47953fe0c881cdb8d0
-
 exports.updateProduct = async (req, res, next) => {
   let product = await Product.findById(req.params.id);
   if (!product) {
@@ -46,12 +47,10 @@ exports.updateProduct = async (req, res, next) => {
       message: "Product not found",
     });
   }
-
   product = await Product.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,
   });
-
   res.status(200).json({
     success: true,
     product,
@@ -67,9 +66,7 @@ exports.deleteProduct = async (req, res, next) => {
       message: "Product not found",
     });
   }
-
   await Product.findByIdAndDelete(req.params.id);
-
   res.status(200).json({
     success: true,
     message: "Product deleted",
