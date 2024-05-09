@@ -5,6 +5,7 @@ const ErrorHandler = require("../utils/errorHandler");
 const sendToken = require("../utils/jwt");
 const crypto = require("crypto");
 
+//register user /api/v1//register
 exports.registerUser = catchAsyncError(async (req, res, next) => {
   const { name, email, password, avatar } = req.body;
   const user = await User.create({
@@ -17,7 +18,7 @@ exports.registerUser = catchAsyncError(async (req, res, next) => {
   sendToken(user, 201, res);
 });
 
-//{{Base_url}}/api/v1//login
+//login user - /api/v1//login
 exports.loginUser = catchAsyncError(async (req, res, next) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -37,7 +38,7 @@ exports.loginUser = catchAsyncError(async (req, res, next) => {
   sendToken(user, 201, res);
 });
 
-//logout
+//logout user - /api/v1/logout
 exports.logoutUser = (req, res, next) => {
   res
     .cookie("token", null, {
@@ -51,7 +52,7 @@ exports.logoutUser = (req, res, next) => {
     });
 };
 
-//{{Base_url}}/api/v1/password/forgot
+//forgot password - {{Base_url}}/api/v1/password/forgot
 exports.forgotPassword = catchAsyncError(async (req, res, next) => {
   const user = await User.findOne({ email: req.body.email });
 
@@ -89,7 +90,7 @@ exports.forgotPassword = catchAsyncError(async (req, res, next) => {
   }
 });
 
-//{{Base_url}}/api/v1/password/reset/d30955495933cdf03aa04e6be54f30ed7df88a47
+//reset password - {{Base_url}}/api/v1/password/reset/:token
 exports.resetPassword = catchAsyncError(async (req, res, next) => {
   const resetPasswordToken = crypto
     .createHash("sha256")
@@ -118,3 +119,104 @@ exports.resetPassword = catchAsyncError(async (req, res, next) => {
 
   sendToken(user, 201, res);
 });
+
+//get user profile - /api/v1/myprofile
+exports.getUserProfile = catchAsyncError(async (req, res, next) => {
+  const user = await User.findById(req.user.id);
+  res.status(200).json({
+    success: true,
+    user,
+  });
+});
+
+//change password -
+exports.changePassword = catchAsyncError(async (req, res, next) => {
+  const user = await User.findById(req.user.id).select("+password");
+
+  //check old password
+  if (!(await user.isValidPassword(req.body.oldPassword))) {
+    return next(new ErrorHandler("Old password is incorrect"), 404);
+  }
+
+  //assigning new password
+  user.password = req.body.password;
+  await user.save();
+  res.status(200).json({
+    success: true,
+  });
+});
+
+//update profile
+exports.updateProfile = catchAsyncError(async (req, res, next) => {
+  const newUserDate = {
+    name: req.body.name,
+    email: req.body.email,
+  };
+
+  const user = await User.findByIdAndUpdate(req.user.id, newUserDate, {
+    new: true,
+    runValidators: true,
+  });
+
+  res.status(200).json({
+    success: true,
+    user,
+  });
+});
+
+//ADMIN: Get all Users
+exports.getAllUsers = catchAsyncError(async (req, res, next) => {
+  const users = await User.find();
+  res.status(200).json({
+    success: true,
+    users,
+  });
+});
+
+//Admin: get specific user
+exports.getUser = catchAsyncError(async (req, res, next) => {
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    return next(
+      new ErrorHandler(`User does not found with id: ${req.params.id}`)
+    );
+  }
+  res.status(200).json({
+    success: true,
+    user,
+  });
+});
+
+
+//Admin: update user profile
+exports.updateUser = catchAsyncError(async (req, res, next) => {
+  const newUserDate = {
+    name: req.body.name,
+    email: req.body.email,
+    role: req.body.role,
+  };
+
+  const user = await User.findByIdAndUpdate(req.params.id, newUserDate, {
+    new: true,
+    runValidators: true,
+  });
+
+  res.status(200).json({
+    success: true,
+    user,
+  });
+});
+
+//Admin: delete user profile
+exports.deleteUser = catchAsyncError(async(req,res,next)=>{
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    return next(
+      new ErrorHandler(`User does not found with id: ${req.params.id}`)
+    );
+  }
+  await user.remove();
+  res.status(200).json({
+    success: true,
+  });
+})
