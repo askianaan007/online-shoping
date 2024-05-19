@@ -3,3 +3,11 @@
  backend
  create npm init 
  install packages - npm i express dotenv mongoose 
+
+
+
+use npx create-expo-app --template to create react native blank 
+
+
+
+
